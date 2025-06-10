@@ -1,0 +1,25 @@
+# create a .gitignore file to exclude files and directories from being tracked by git
+# Node.js dependencies
+node_modules/
+# Build output
+dist/
+# Logs
+logs/
+# Environment variables
+.env
+# IDE specific files
+.vscode/
+# Operating system files
+.DS_Store
+# Coverage reports
+coverage/
+# Temporary files
+tmp/
+# Yarn integrity file
+.yarn-integrity
+# npm debug log
+npm-debug.log*
+# Yarn debug log
+yarn-debug.log*
+# Yarn error log
+yarn-error.log*
