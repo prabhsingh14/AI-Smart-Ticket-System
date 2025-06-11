@@ -1,0 +1,125 @@
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import User from "../models/user.model.js";
+import { inngest } from "../inngest/client.js";
+
+export const signup = async (req, res) => {
+    try {
+        const { email, password, skills = [] } = req.body;
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({
+            email,
+            password: hashedPassword,
+            skills
+        });
+
+        // Trigger Inngest event for user signup
+        await inngest.send({
+            name: "user/signup",
+            data: {
+                email
+            }
+        });
+
+        const token = jwt.sign({
+            _id: user._id,
+            role: user.role,
+        }, process.env.JWT_SECRET)
+
+        // not returning password in response
+        res.status(201).json({
+            success: true,
+            message: "User created successfully",
+            user: {
+                _id: user._id,
+                email: user.email,
+                role: user.role,
+                skills: user.skills,
+            },
+            token
+        });
+    } catch (error) {
+        console.error("Error during signup:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
+
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid password",
+            });
+        }
+
+        const token = jwt.sign({
+            _id: user._id,
+            role: user.role,
+        }, process.env.JWT_SECRET);
+
+        res.status(200).json({
+            success: true,
+            message: "User logged in successfully",
+            user: {
+                _id: user._id,
+                email: user.email,
+                role: user.role,
+                skills: user.skills,
+            },
+            token
+        });
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
+
+export const logout = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.user._id, {
+            $set: {
+                refreshToken: undefined
+            },
+        },{ new: true })
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+
+        res.cookie("token", "", options);
+        res.status(200).json({
+            success: true,
+            message: "User logged out successfully"
+        });
+    } catch (error) {
+        console.error("Error during logout:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
