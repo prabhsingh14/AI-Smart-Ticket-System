@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
+import { User } from "../models/user.model.js";
 import { inngest } from "../inngest/client.js";
 
 export const signup = async (req, res) => {
@@ -117,6 +117,84 @@ export const logout = async (req, res) => {
     } catch (error) {
         console.error("Error during logout:", error);
         res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
+
+export const updateUser = async (req, res) => {
+    const { skills = [], role, email } = req.body;
+
+    try {
+        if(req.user?.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "You are not authorized to update this user"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(req.user._id, {
+            $set: {
+                skills: skills.length > 0 ? skills : user.skills,
+                role,
+                email
+            }
+        }, { new: true });
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "User updated successfully",
+            user: {
+                _id: user._id,
+                email: user.email,
+                role: user.role,
+                skills: user.skills,
+            }
+        });
+    } catch (error) {
+        console.error("Error during user update:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
+
+export const getUser = async (req, res) => {
+    try {
+        if(req.user?.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "You are not authorized to view this user"
+            });
+        }
+
+        const user = await User.findById(req.user._id).select("-password");
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            user
+        });
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        return res.status(500).json({
             success: false,
             message: "Internal server error",
             error: error.message
