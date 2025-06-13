@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import userRoutes from './routes/user.routes.js';
 import ticketRoutes from './routes/ticket.routes.js';
-import { serve } from inngest/express;
+import { serve } from 'inngest/express';
 import { inngest } from './inngest/client.js';
 import { onSignup } from './inngest/functions/on-signup.js';
 import { onTicketCreated } from './inngest/functions/on-ticket-creation.js';
@@ -15,6 +15,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", userRoutes);
 app.use("/api/tickets", ticketRoutes);

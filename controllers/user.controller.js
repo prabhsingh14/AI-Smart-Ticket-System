@@ -1,33 +1,59 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 import { inngest } from "../inngest/client.js";
 
 export const signup = async (req, res) => {
-    try {
-        const { email, password, skills = [] } = req.body;
+    const { email, password, skills = [] } = req.body;
 
+    try {
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message: "Email already exists",
+            });
+        }
+
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create user
         const user = await User.create({
             email,
             password: hashedPassword,
-            skills
+            skills,
         });
 
-        // Trigger Inngest event for user signup
-        await inngest.send({
-            name: "user/signup",
-            data: {
-                email
-            }
-        });
+        // Fire Inngest event
+        try {
+            await inngest.send({
+                name: "user/signup",
+                data: {
+                    email: user.email,
+                    userId: user._id,
+                },
+            });
+        } catch (error) {
+            console.error("Error sending Inngest event:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send signup event",
+            });
+        }
 
-        const token = jwt.sign({
-            _id: user._id,
-            role: user.role,
-        }, process.env.JWT_SECRET)
+        // Generate JWT
+        const token = jwt.sign(
+            {
+                _id: user._id,
+                role: user.role,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
 
-        // not returning password in response
+        // Respond
         res.status(201).json({
             success: true,
             message: "User created successfully",
@@ -37,21 +63,27 @@ export const signup = async (req, res) => {
                 role: user.role,
                 skills: user.skills,
             },
-            token
+            token,
         });
     } catch (error) {
         console.error("Error during signup:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: error.message
+            error: error.message,
         });
     }
-}
+};
 
 export const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.body || {};
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required",
+            });
+        }
 
         const user = await User.findOne({ email });
 
