@@ -2,7 +2,7 @@
 
 **AI‑powered ticket classification, prioritization & assignment made simple.**
 
-AI- powered backend application that intelligently manages support tickets—from automatic categorization to skill‑based assignment and moderator guidance.
+AI- powered backend application that intelligently manages support tickets from automatic categorization to skill‑based assignment and moderator guidance.
 
 ---
 
