@@ -29,6 +29,18 @@ const ticketSchema = new mongoose.Schema({
     relatedSkills: [
         String
     ],
+    resolution: { //stores how the issue was solved
+        type: String,
+        default: ""
+    },
+    isResolved: { //to track resolution status
+        type: Boolean,
+        default: false
+    },
+    embeddings: { //store vector representation of the issue
+        type: [Number],
+        default: []
+    },
     createdAt: {
         type: Date,
         default: Date.now

@@ -1,10 +1,17 @@
 import { inngest } from "../inngest/client.js";
 import Ticket from "../models/ticket.model.js";
+import { getEmbeddings } from "../utils/embeddings.js";
+import cosineSimilarity from "compute-cosine-similarity";
 
-// Creates a new ticket and triggers an Inngest function for ticket creation
+/*Creates a new ticket, triggers an Inngest function for ticket creation
+Generate and store embeddings
+*/
+
 export const createTicket = async (req, res) => {
     try {
         const { title, description } = req.body;
+        const embeddings = await getEmbeddings(`${title} ${description}`);
+
         if (!title || !description) {
             return res.status(400).json({ error: "Title and description are required." });
         }
@@ -12,6 +19,7 @@ export const createTicket = async (req, res) => {
         const newTicket = await Ticket.create({
             title,
             description,
+            embeddings,
             createdBy: req.user._id.toString(),
         });
 
@@ -84,5 +92,43 @@ export const getTicket = async (req, res) => {
     } catch (error) {
         console.error("Error fetching ticket:", error);
         return res.status(500).json({ error: "An error occurred while fetching the ticket." });
+    }
+}
+
+export const getSimilarTickets = async(req, res) => {
+    try {
+        const {title, description} = req.body;
+        const queryEmbeddings = await getEmbeddings(`${title} ${description}`);
+        const tickets = await Ticket.find({
+            embeddings: { $exists: true }
+        });
+
+        // similarity score for each ticket
+        const scored = tickets.map(ticket => {
+            const score = cosineSimilarity(queryEmbeddings, ticket.embeddings);
+            return { ticket, score };
+        })
+
+        // sort in desc, take top 3
+        const topMatches = scored
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3)
+            .map(({ ticket, score }) => ({
+                _id: ticket._id,
+                title: ticket.title,
+                description: ticket.description,
+                resolution: ticket.resolution,
+                score: score.toFixed(3)
+            }));
+        
+        return res.status(200).json({
+            message: "Similar tickets fetched successfully.",
+            topMatches
+        })
+    } catch (error) {
+        console.error("Error fetching similar tickets:", error);
+        return res.status(500).json({ 
+            error: "An error occurred while fetching similar tickets." 
+        });
     }
 }
