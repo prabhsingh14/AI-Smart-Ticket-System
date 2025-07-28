@@ -17,6 +17,11 @@ AI- powered backend application that intelligently manages support tickets from 
 
 ---
 
+## Architecture
+
+<img width="1589" height="948" alt="architecture" src="https://github.com/user-attachments/assets/f8510b0d-ae77-43bc-882d-93672118d474" />
+
+---
 ## Tech Stack
 
 - **Backend**: Node.js + Express  
