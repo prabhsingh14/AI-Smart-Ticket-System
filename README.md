@@ -2,7 +2,7 @@
 
 **AI‑powered ticket classification, prioritization & assignment made simple.**
 
-AI- powered backend application that intelligently manages support tickets from automatic categorization to skill‑based assignment and moderator guidance.
+AI- powered backend application that intelligently manages support tickets from automatic categorization to skill‑based assignment, moderator guidance and provides suggestions based on past similar resolved tickets.
 
 ---
 
@@ -11,6 +11,7 @@ AI- powered backend application that intelligently manages support tickets from 
 - **AI-driven categorization**: Uses Google Gemini to identify ticket type, priority, required skills, and generate contextual notes.
 - **Skill-based routing**: Matches tickets to moderators based on expertise; falls back to admin when needed.
 - **Event-driven workflow**: Built with Inngest for seamless asynchronous processing and real-time email alerts.
+- **AI-driven suggestions**: Uses OpenAI to provide suggestions for solutions to resolve tickets based on past similar resolved tickets.
 - **Secure access control**: User roles include User, Moderator, and Admin via JWT authentication.
 - **Email orchestration**: Sends structured notifications via Nodemailer (Mailtrap-powered).
 
@@ -19,7 +20,7 @@ AI- powered backend application that intelligently manages support tickets from 
 ## Tech Stack
 
 - **Backend**: Node.js + Express  
-- **AI**: Google Gemini API  
+- **AI**: Google Gemini API & OpenAI API
 - **Database**: MongoDB + Mongoose  
 - **Queueing**: Inngest  
 - **Auth**: JWT  
@@ -38,6 +39,7 @@ AI- powered backend application that intelligently manages support tickets from 
     - MONGO_URI=...
     - JWT_SECRET=...
     - GEMINI_API_KEY=...
+    - OPENAI_API_KEY=...
     - MAILTRAP_SMTP_HOST=...
     - MAILTRAP_SMTP_PORT=...
     - MAILTRAP_SMTP_USER=...
@@ -50,11 +52,12 @@ AI- powered backend application that intelligently manages support tickets from 
 ---
 
 ## Ticket Workflow
-1. Ticket creation ➝ Triggers Inngest on-ticket-created.
-2. AI processes the ticket — assigns priority, category, skills, adds note.
+1. Ticket creation: Triggers Inngest on-ticket-created.
+2. AI processes the ticket, assigns priority, category, skills, adds note.
 3. Matching logic finds the best-suited moderator or defaults to admin.
 4. Assignment update + email notification with AI note.
 5. Moderator logs in and handles ticket confidently.
+6. AI suggests solutions for the ticket based on past similar resolved tickets.
 
 ---
 
